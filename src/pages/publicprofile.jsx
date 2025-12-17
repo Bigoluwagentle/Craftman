@@ -259,7 +259,7 @@ function Publicprofile() {
           </section>
           <summary id="summary">
             <img src={close} alt="closeimg" id="close" />
-            <Link to="/">Home</Link>
+            <Link to="/Userdashboard">Dashboard</Link>
             <Link to={isLoggedIn ? "/Browsecraft" : "/Browsecraftsmen"}>Browse Craftsmen</Link>
             {isLoggedIn ? (
               <button onClick={handleLogout}>Logout</button>
