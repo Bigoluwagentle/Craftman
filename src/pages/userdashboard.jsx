@@ -104,8 +104,8 @@ function Userdashboard() {
                 <Link to="/Profiledetails"><img src={getProfilePictureUrl(user?.profilePicture, profilepic)}  alt="profilepicimg" style={{ width: "50px", height: "50px", borderRadius: "50%", objectFit: "cover" }}/></Link>
               </section>
               <summary id="summar">
-                <img src={close} alt="closeimg" id="close" />
-                <Link to="/">Home</Link>
+                <img src={close} alt="closeimg" id="close" style={{color: "#fff"}}/>
+                {/* <Link to="/">Home</Link> */}
                 <Link to="/Browsecraft">Browse Craftsmen</Link>
                 <Link to="/Userdashboard"><button>Dashboard</button></Link>
                 {isClient && (
