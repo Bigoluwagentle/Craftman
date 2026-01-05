@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getUserProfile, getArtisanProfile, updateArtisanProfile, uploadProfilePicture, deleteProfilePicture,} from "../services/api";
+import { getUserProfile, getArtisanProfile, updateArtisanProfile, uploadProfilePicture, deleteProfilePicture } from "../services/api";
+import Swal from 'sweetalert2';
 import "../styles/profiledetails.css";
 import close from "../images/icon-close.svg";
 import hamburger from "../images/icon-hamburger.svg";
@@ -16,9 +17,9 @@ function Profiledetails() {
   const [success, setSuccess] = useState("");
 
   const [userProfile, setUserProfile] = useState(null);
-  const [ setArtisanProfile ] = useState(null);
+  // eslint-disable-next-line no-unused-vars
+  const [artisanProfile, setArtisanProfile] = useState(null); 
 
-  
   const [userFormData, setUserFormData] = useState({
     name: "",
     email: "",
@@ -99,12 +100,22 @@ function Profiledetails() {
 
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
     if (!allowedTypes.includes(file.type)) {
-      alert("Only image files (JPEG, JPG, PNG, GIF) are allowed");
+      Swal.fire({
+        icon: 'error',
+        title: 'Invalid File Type',
+        text: 'Only image files (JPEG, JPG, PNG, GIF) are allowed',
+        confirmButtonColor: '#3b82f6'
+      });
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("Image size must be less than 5MB");
+      Swal.fire({
+        icon: 'error',
+        title: 'File Too Large',
+        text: 'Image size must be less than 5MB',
+        confirmButtonColor: '#3b82f6'
+      });
       return;
     }
 
@@ -119,18 +130,38 @@ function Profiledetails() {
 
       await fetchProfileData();
 
-      alert("Profile picture uploaded successfully!");
+      Swal.fire({
+        icon: 'success',
+        title: 'Success!',
+        text: 'Profile picture uploaded successfully!',
+        confirmButtonColor: '#3b82f6',
+        timer: 2000
+      });
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to upload profile picture");
+      Swal.fire({
+        icon: 'error',
+        title: 'Upload Failed',
+        text: err.response?.data?.message || 'Failed to upload profile picture',
+        confirmButtonColor: '#3b82f6'
+      });
     } finally {
       setUploadingImage(false);
     }
   };
 
   const handleDeleteImage = async () => {
-    if (!window.confirm("Are you sure you want to delete your profile picture?")) {
-      return;
-    }
+    const result = await Swal.fire({
+      title: 'Delete Profile Picture?',
+      text: "Are you sure you want to delete your profile picture?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3b82f6',
+      cancelButtonColor: '#ef4444',
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       setUploadingImage(true);
@@ -142,9 +173,20 @@ function Profiledetails() {
 
       await fetchProfileData();
 
-      alert("Profile picture deleted successfully!");
+      Swal.fire({
+        icon: 'success',
+        title: 'Deleted!',
+        text: 'Profile picture deleted successfully!',
+        confirmButtonColor: '#3b82f6',
+        timer: 2000
+      });
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to delete profile picture");
+      Swal.fire({
+        icon: 'error',
+        title: 'Delete Failed',
+        text: err.response?.data?.message || 'Failed to delete profile picture',
+        confirmButtonColor: '#3b82f6'
+      });
     } finally {
       setUploadingImage(false);
     }
@@ -173,6 +215,14 @@ function Profiledetails() {
         await updateArtisanProfile(updateData);
         setSuccess("Profile updated successfully!");
 
+        Swal.fire({
+          icon: 'success',
+          title: 'Success!',
+          text: 'Profile updated successfully!',
+          confirmButtonColor: '#3b82f6',
+          timer: 2000
+        });
+
         setTimeout(() => {
           fetchProfileData();
           setSuccess("");
@@ -183,7 +233,12 @@ function Profiledetails() {
         setSaving(false);
       }
     } else {
-      alert("User information update feature coming soon!");
+      Swal.fire({
+        icon: 'info',
+        title: 'Coming Soon',
+        text: 'User information update feature coming soon!',
+        confirmButtonColor: '#3b82f6'
+      });
     }
   };
 
@@ -221,8 +276,10 @@ function Profiledetails() {
   }
 
   const isArtisan = userProfile?.role === "artisan";
+  const API_BASE_URL = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000';
+
   const profilePictureUrl = userProfile?.profilePicture
-    ? `http://localhost:5000${userProfile.profilePicture}`
+    ? `${API_BASE_URL}${userProfile.profilePicture}`
     : profilepic;
 
   return (
@@ -251,26 +308,26 @@ function Profiledetails() {
             </section>
           </header>
 
-          <main> 
+          <main>
             <h1>My Profile</h1>
             <div>
-              <img src={profilePictureUrl} alt="Profile"/>
+              <img src={profilePictureUrl} alt="Profile" />
               <div>
                 <input type="file" id="profilePictureInput" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
-                <button onClick={() => document.getElementById("profilePictureInput").click()} disabled={uploadingImage} style={{cursor: uploadingImage ? "not-allowed" : "pointer"}}>{uploadingImage ? "Uploading..." : "Change Picture"}</button>
+                <button onClick={() => document.getElementById("profilePictureInput").click()} disabled={uploadingImage} style={{ cursor: uploadingImage ? "not-allowed" : "pointer" }}>{uploadingImage ? "Uploading..." : "Change Picture"}</button>
                 {userProfile?.profilePicture && (
-                  <button onClick={handleDeleteImage} disabled={uploadingImage} style={{backgroundColor: "#dc3545", cursor: uploadingImage ? "not-allowed" : "pointer",}}> Delete Picture</button>
+                  <button onClick={handleDeleteImage} disabled={uploadingImage} style={{ backgroundColor: "#dc3545", cursor: uploadingImage ? "not-allowed" : "pointer" }}> Delete Picture</button>
                 )}
               </div>
               <p>Allowed: JPG, JPEG, PNG, GIF (Max 5MB)</p>
             </div>
 
             {success && (
-              <div style={{ backgroundColor: "#d4edda", color: "#155724", padding: "10px", borderRadius: "4px", marginBottom: "20px"}}>{success}</div>
+              <div style={{ backgroundColor: "#d4edda", color: "#155724", padding: "10px", borderRadius: "4px", marginBottom: "20px" }}>{success}</div>
             )}
 
             {error && (
-              <div style={{ backgroundColor: "#f8d7da", color: "#721c24", padding: "10px", borderRadius: "4px", marginBottom: "20px"}}>{error}</div>
+              <div style={{ backgroundColor: "#f8d7da", color: "#721c24", padding: "10px", borderRadius: "4px", marginBottom: "20px" }}>{error}</div>
             )}
 
             <form onSubmit={handleSubmit}>
@@ -309,7 +366,7 @@ function Profiledetails() {
 
                   <nav>
                     <label htmlFor="craftType">Craft Type</label>
-                    <input type="text" name="craftType" placeholder="e.g., Electrician, Plumber" value={artisanFormData.craftType} onChange={handleArtisanChange} required/>
+                    <input type="text" name="craftType" placeholder="e.g., Electrician, Plumber" value={artisanFormData.craftType} onChange={handleArtisanChange} required />
                   </nav>
 
                   <nav>
@@ -329,12 +386,12 @@ function Profiledetails() {
 
                   <nav>
                     <label htmlFor="skills">Skills (separate with commas)</label>
-                    <input type="text" name="skills" placeholder="e.g., Wiring, Installation, Repairs" value={artisanFormData.skills} onChange={handleArtisanChange}/>
+                    <input type="text" name="skills" placeholder="e.g., Wiring, Installation, Repairs" value={artisanFormData.skills} onChange={handleArtisanChange} />
                   </nav>
                 </>
               )}
 
-              <input type="submit" value={saving ? "Saving..." : "Save Changes"} disabled={saving || !isArtisan} style={{cursor: saving || !isArtisan ? "not-allowed" : "pointer", opacity: saving || !isArtisan ? 0.6 : 1,}}/>
+              <input type="submit" value={saving ? "Saving..." : "Save Changes"} disabled={saving || !isArtisan} style={{ cursor: saving || !isArtisan ? "not-allowed" : "pointer", opacity: saving || !isArtisan ? 0.6 : 1 }} />
 
               {!isArtisan && (
                 <p>Profile editing for clients coming soon!</p>

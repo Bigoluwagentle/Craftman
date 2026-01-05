@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getUnverifiedArtisans, getVerifiedArtisans, verifyArtisan, unverifyArtisan, getAllUsers,} from "../services/api";
+import { getUnverifiedArtisans, getVerifiedArtisans, verifyArtisan, unverifyArtisan, getAllUsers } from "../services/api";
+import Swal from 'sweetalert2';
 import "../styles/admindashboard.css";
 import close from "../images/icon-close.svg";
 import logoimg from "../images/logoimage.png";
@@ -16,7 +17,7 @@ function Admindashboard() {
   const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState("unverified"); 
+  const [activeTab, setActiveTab] = useState("unverified");
   const [processingId, setProcessingId] = useState(null);
 
   const user = JSON.parse(localStorage.getItem("user"));
@@ -30,13 +31,18 @@ function Admindashboard() {
 
     const currentUser = JSON.parse(localStorage.getItem("user"));
     if (!currentUser || currentUser.role !== "admin") {
-      alert("Access denied. Admin only.");
+      Swal.fire({
+        icon: 'error',
+        title: 'Access Denied',
+        text: 'Admin access only',
+        confirmButtonColor: '#3b82f6'
+      });
       navigate("/");
       return;
     }
 
     fetchData();
-  }, [isLoggedIn, navigate]); 
+  }, [isLoggedIn, navigate]);
 
   const fetchData = async () => {
     try {
@@ -60,34 +66,78 @@ function Admindashboard() {
   };
 
   const handleVerify = async (userId) => {
-    if (!window.confirm("Are you sure you want to verify this artisan?")) {
-      return;
-    }
+    const result = await Swal.fire({
+      title: 'Verify Artisan?',
+      text: "Are you sure you want to verify this artisan?",
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3b82f6',
+      cancelButtonColor: '#ef4444',
+      confirmButtonText: 'Yes, verify!',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       setProcessingId(userId);
       await verifyArtisan(userId);
-      alert("Artisan verified successfully!");
-      fetchData(); // Refresh data
+      
+      Swal.fire({
+        icon: 'success',
+        title: 'Success!',
+        text: 'Artisan verified successfully!',
+        confirmButtonColor: '#3b82f6',
+        timer: 2000
+      });
+      
+      fetchData();
     } catch (err) {
-      alert("Failed to verify artisan: " + (err.response?.data?.message || err.message));
+      Swal.fire({
+        icon: 'error',
+        title: 'Failed',
+        text: err.response?.data?.message || err.message,
+        confirmButtonColor: '#3b82f6'
+      });
     } finally {
       setProcessingId(null);
     }
   };
 
   const handleUnverify = async (userId) => {
-    if (!window.confirm("Are you sure you want to unverify this artisan?")) {
-      return;
-    }
+    const result = await Swal.fire({
+      title: 'Unverify Artisan?',
+      text: "Are you sure you want to unverify this artisan?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3b82f6',
+      cancelButtonColor: '#ef4444',
+      confirmButtonText: 'Yes, unverify!',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       setProcessingId(userId);
       await unverifyArtisan(userId);
-      alert("Artisan unverified successfully!");
-      fetchData(); 
+      
+      Swal.fire({
+        icon: 'success',
+        title: 'Success!',
+        text: 'Artisan unverified successfully!',
+        confirmButtonColor: '#3b82f6',
+        timer: 2000
+      });
+      
+      fetchData();
     } catch (err) {
-      alert("Failed to unverify artisan: " + (err.response?.data?.message || err.message));
+      Swal.fire({
+        icon: 'error',
+        title: 'Failed',
+        text: err.response?.data?.message || err.message,
+        confirmButtonColor: '#3b82f6'
+      });
     } finally {
       setProcessingId(null);
     }
@@ -121,9 +171,9 @@ function Admindashboard() {
     return (
       <div style={{ textAlign: "center", marginTop: "50px", color: "red" }}>
         <p>{error}</p>
-        <p style={{ color: "#666", marginTop: "10px" }}> Error details: Check console for more information</p>
-        <button onClick={() => {setError(""); fetchData();}}style={{ padding: "10px 20px", backgroundColor: "#007bff", color: "white", border: "none", borderRadius: "4px", cursor: "pointer", marginTop: "10px"}}>Retry</button>
-        <button  onClick={handleLogout} style={{ padding: "10px 20px", backgroundColor: "#6c757d", color: "white", border: "none", borderRadius: "4px", cursor: "pointer", marginTop: "10px", marginLeft: "10px"}}>Logout</button>
+        <p style={{ color: "#666", marginTop: "10px" }}>Error details: Check console for more information</p>
+        <button onClick={() => { setError(""); fetchData(); }} style={{ padding: "10px 20px", backgroundColor: "#007bff", color: "white", border: "none", borderRadius: "4px", cursor: "pointer", marginTop: "10px" }}>Retry</button>
+        <button onClick={handleLogout} style={{ padding: "10px 20px", backgroundColor: "#6c757d", color: "white", border: "none", borderRadius: "4px", cursor: "pointer", marginTop: "10px", marginLeft: "10px" }}>Logout</button>
       </div>
     );
   }
@@ -133,21 +183,19 @@ function Admindashboard() {
       <div>
         <div>
           <nav>
-            <img src={logoimg} alt="logoimg"/>
+            <img src={logoimg} alt="logoimg" />
           </nav>
           <section>
             <h3>Admin Panel</h3>
-            <Link onClick={() => setActiveTab("unverified")} style={{color: activeTab === "unverified" ? "#3498db" : "white",}}><i className="fa-solid fa-clock"></i> Pending Verification ({unverifiedArtisans.length})</Link>
-            <Link onClick={() => setActiveTab("verified")} style={{color: activeTab === "verified" ? "#3498db" : "white"}}><i className="fa-solid fa-check-circle"></i> Verified Artisans ({verifiedArtisans.length})</Link>
-            <Link
-              onClick={() => setActiveTab("users")}
-              style={{color: activeTab === "users" ? "#3498db" : "white"}}> <i className="fa-solid fa-users"></i> All Users ({allUsers.length})</Link>
+            <Link onClick={() => setActiveTab("unverified")} style={{ color: activeTab === "unverified" ? "#3498db" : "white" }}><i className="fa-solid fa-clock"></i> Pending Verification ({unverifiedArtisans.length})</Link>
+            <Link onClick={() => setActiveTab("verified")} style={{ color: activeTab === "verified" ? "#3498db" : "white" }}><i className="fa-solid fa-check-circle"></i> Verified Artisans ({verifiedArtisans.length})</Link>
+            <Link onClick={() => setActiveTab("users")} style={{ color: activeTab === "users" ? "#3498db" : "white" }}> <i className="fa-solid fa-users"></i> All Users ({allUsers.length})</Link>
             <Link to="/Browsecraft"><i className="fa-solid fa-search"></i> Browse Craftsmen</Link>
             <button onClick={handleLogout}>Logout</button>
           </section>
         </div>
 
-        <section >
+        <section>
           <header>
             <section>
               <img src={hamburger} id="hamburger" onClick={Hamburger} alt="hamburgerimg" />
@@ -159,7 +207,7 @@ function Admindashboard() {
               </div>
               <section>
                 <span>Admin: {user?.name}</span>
-                <Link><img src={getProfilePictureUrl(user?.profilePicture, profilepic)}  alt="profilepicimg" style={{ width: "50px", height: "50px", borderRadius: "50%", objectFit: "cover" }}/></Link>
+                <Link><img src={getProfilePictureUrl(user?.profilePicture, profilepic)} alt="profilepicimg" style={{ width: "50px", height: "50px", borderRadius: "50%", objectFit: "cover" }} /></Link>
               </section>
               <summary id="summar">
                 <img src={close} alt="closeimg" id="close" />
@@ -189,11 +237,11 @@ function Admindashboard() {
             <div>
               <h2>Pending Verification ({unverifiedArtisans.length})</h2>
               {unverifiedArtisans.length === 0 ? (
-                <p >No artisans pending verification</p>
+                <p>No artisans pending verification</p>
               ) : (
                 <div>
                   {unverifiedArtisans.map((artisan) => (
-                    <div key={artisan._id} style={{ backgroundColor: "#f8f9fa", padding: "20px", marginBottom: "15px", borderRadius: "8px", border: "1px solid #dee2e6"}}>
+                    <div key={artisan._id} style={{ backgroundColor: "#f8f9fa", padding: "20px", marginBottom: "15px", borderRadius: "8px", border: "1px solid #dee2e6" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
                         <div style={{ flex: 1 }}>
                           <h4>{artisan.userId?.name}</h4>
@@ -329,22 +377,7 @@ function Admindashboard() {
                         </p>
                       </div>
                       <div>
-                        <span
-                          style={{
-                            padding: "5px 15px",
-                            backgroundColor:
-                              user.role === "admin"
-                                ? "#dc3545"
-                                : user.role === "artisan"
-                                ? "#007bff"
-                                : "#28a745",
-                            color: "white",
-                            borderRadius: "20px",
-                            fontSize: "14px",
-                          }}
-                        >
-                          {user.role.toUpperCase()}
-                        </span>
+                        <span style={{ padding: "5px 15px", backgroundColor: user.role === "admin" ? "#dc3545" : user.role === "artisan" ? "#007bff" : "#28a745",color: "white",borderRadius: "20px",fontSize: "14px",}}>{user.role.toUpperCase()}</span>
                       </div>
                     </div>
                   </div>

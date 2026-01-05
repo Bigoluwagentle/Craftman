@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { getArtisanById, getArtisanReviews, createReview, unlockContact, checkIfUnlocked } from "../services/api";
+import Swal from 'sweetalert2';
 import "../styles/publicprofile.css";
 import logo from "../images/logoimage.png";
 import profilepic from "../images/profilepics.png";
@@ -88,33 +89,67 @@ function Publicprofile() {
 
   const handleUnlockContact = async () => {
     if (!isLoggedIn) {
-      alert("Please login to unlock contacts");
+      Swal.fire({
+        icon: 'warning',
+        title: 'Login Required',
+        text: 'Please login to unlock contacts',
+        confirmButtonColor: '#3b82f6'
+      });
       navigate("/Login");
       return;
     }
 
     if (!isClient) {
-      alert("Only clients can unlock contacts");
+      Swal.fire({
+        icon: 'error',
+        title: 'Access Denied',
+        text: 'Only clients can unlock contacts',
+        confirmButtonColor: '#3b82f6'
+      });
       return;
     }
 
     if (!hasSubscription) {
-      alert("Please subscribe to unlock contacts");
-      navigate("/Subcription");
+      Swal.fire({
+        icon: 'info',
+        title: 'Subscription Required',
+        text: 'Please subscribe to unlock contacts',
+        confirmButtonColor: '#3b82f6',
+        showCancelButton: true,
+        confirmButtonText: 'Subscribe Now',
+        cancelButtonText: 'Maybe Later'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate("/Subcription");
+        }
+      });
       return;
     }
 
     try {
       setUnlocking(true);
       const response = await unlockContact(artisan._id);
-      alert(response.message + ` (${response.remainingContacts} contacts remaining)`);
+      
+      Swal.fire({
+        icon: 'success',
+        title: 'Contact Unlocked!',
+        text: `${response.message} (${response.remainingContacts} contacts remaining)`,
+        confirmButtonColor: '#3b82f6',
+        timer: 3000
+      });
+      
       setIsUnlocked(true);
 
       const updatedUser = JSON.parse(localStorage.getItem("user"));
       updatedUser.subscription.unlockedContacts = response.remainingContacts;
       localStorage.setItem("user", JSON.stringify(updatedUser));
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to unlock contact");
+      Swal.fire({
+        icon: 'error',
+        title: 'Failed to Unlock',
+        text: err.response?.data?.message || 'Failed to unlock contact',
+        confirmButtonColor: '#3b82f6'
+      });
     } finally {
       setUnlocking(false);
     }
@@ -131,18 +166,33 @@ function Publicprofile() {
     e.preventDefault();
 
     if (!isLoggedIn) {
-      alert("Please login to submit a review");
+      Swal.fire({
+        icon: 'warning',
+        title: 'Login Required',
+        text: 'Please login to submit a review',
+        confirmButtonColor: '#3b82f6'
+      });
       navigate("/Login");
       return;
     }
 
     if (!isClient) {
-      alert("Only clients can submit reviews");
+      Swal.fire({
+        icon: 'error',
+        title: 'Access Denied',
+        text: 'Only clients can submit reviews',
+        confirmButtonColor: '#3b82f6'
+      });
       return;
     }
 
     if (!reviewForm.comment.trim()) {
-      alert("Please enter a review comment");
+      Swal.fire({
+        icon: 'warning',
+        title: 'Review Required',
+        text: 'Please enter a review comment',
+        confirmButtonColor: '#3b82f6'
+      });
       return;
     }
 
@@ -155,7 +205,13 @@ function Publicprofile() {
         comment: reviewForm.comment,
       });
 
-      alert("Review submitted successfully!");
+      Swal.fire({
+        icon: 'success',
+        title: 'Review Submitted!',
+        text: 'Your review has been posted successfully',
+        confirmButtonColor: '#3b82f6',
+        timer: 2000
+      });
 
       const reviewsData = await getArtisanReviews(artisanId);
       setReviews(reviewsData);
@@ -166,7 +222,12 @@ function Publicprofile() {
       setReviewForm({ rating: 5, comment: "" });
       setShowReviewForm(false);
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to submit review");
+      Swal.fire({
+        icon: 'error',
+        title: 'Submission Failed',
+        text: err.response?.data?.message || 'Failed to submit review',
+        confirmButtonColor: '#3b82f6'
+      });
     } finally {
       setSubmittingReview(false);
     }
@@ -276,7 +337,7 @@ function Publicprofile() {
       <main>
         <div>
           <div>
-            <img src={getProfilePictureUrl(artisan.userId?.profilePicture, profilepic)} alt="profilepicimg"/>
+            <img src={getProfilePictureUrl(artisan.userId?.profilePicture, profilepic)} alt="profilepicimg" />
             <nav>
               <h3>{artisan.userId?.name}</h3>
               <p>Expert {artisan.craftType}</p>
@@ -308,7 +369,7 @@ function Publicprofile() {
               <nav>
                 <p><i className="fa-solid fa-envelope"></i> Email: {artisan.userId?.email}</p>
                 <p><i className="fa-solid fa-phone"></i> Phone: {artisan.userId?.phone}</p>
-                <p style={{ color: "#28a745", marginTop: "10px", fontWeight: "bold" }}>Contact unlocked</p>
+                <p style={{ color: "#28a745", marginTop: "10px", fontWeight: "bold" }}>✓ Contact unlocked</p>
               </nav>
             ) : (
               <nav>
@@ -316,20 +377,21 @@ function Publicprofile() {
                 <p style={{ marginTop: "10px", fontWeight: "bold" }}>Contact details are locked</p>
                 <p style={{ marginBottom: "15px" }}>
                   {hasSubscription
-                    ? "Use your subscription to unlock this contact" : "Subscribe to unlock contact information"}
+                    ? "Use your subscription to unlock this contact"
+                    : "Subscribe to unlock contact information"}
                 </p>
-                  {hasSubscription ? (
+                {hasSubscription ? (
                   <>
                     <p style={{ marginBottom: "10px", color: "#666" }}>
                       Available unlocks: {user?.subscription?.unlockedContacts || 0}
                     </p>
-                    <button onClick={handleUnlockContact} disabled={unlocking || (user?.subscription?.unlockedContacts || 0) === 0} style={{ padding: "10px 30px", backgroundColor: "#28a745", color: "white", border: "none", borderRadius: "4px", cursor: unlocking || (user?.subscription?.unlockedContacts || 0) === 0 ? "not-allowed" : "pointer", fontSize: "16px", opacity: unlocking || (user?.subscription?.unlockedContacts || 0) === 0 ? 0.6 : 1}}>{unlocking ? "Unlocking..." : "Unlock Contact (1 credit)"}</button>
+                    <button onClick={handleUnlockContact} disabled={unlocking || (user?.subscription?.unlockedContacts || 0) === 0} style={{ padding: "10px 30px", backgroundColor: "#28a745", color: "white", border: "none", borderRadius: "4px", cursor: unlocking || (user?.subscription?.unlockedContacts || 0) === 0 ? "not-allowed" : "pointer", fontSize: "16px", opacity: unlocking || (user?.subscription?.unlockedContacts || 0) === 0 ? 0.6 : 1 }}>{unlocking ? "Unlocking..." : "Unlock Contact (1 credit)"}</button>
                     {(user?.subscription?.unlockedContacts || 0) === 0 && (
                       <p style={{ marginTop: "10px", color: "#dc3545", fontSize: "14px" }}>No unlocks remaining. <Link to="/Subcription" style={{ color: "#007bff" }}>Upgrade plan</Link> </p>
                     )}
                   </>
                 ) : (
-                  <button onClick={handleSubscribe} style={{ padding: "10px 30px", backgroundColor: "#007bff", color: "white", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "16px"}}>Subscribe Now</button>
+                  <button onClick={handleSubscribe} style={{ padding: "10px 30px", backgroundColor: "#007bff", color: "white", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "16px" }}>Subscribe Now</button>
                 )}
               </nav>
             )}
@@ -338,9 +400,9 @@ function Publicprofile() {
           {artisan.portfolioImages && artisan.portfolioImages.length > 0 && (
             <section style={{ marginTop: "30px" }}>
               <h2>Portfolio</h2>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "15px", marginTop: "20px"}}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "15px", marginTop: "20px" }}>
                 {artisan.portfolioImages.map((image, index) => (
-                  <img key={index} src={image} alt={`Portfolio ${index + 1}`} style={{ width: "100%", height: "200px", objectFit: "cover", borderRadius: "8px", }} />
+                  <img key={index} src={image} alt={`Portfolio ${index + 1}`} style={{ width: "100%", height: "200px", objectFit: "cover", borderRadius: "8px" }} />
                 ))}
               </div>
             </section>
@@ -350,16 +412,16 @@ function Publicprofile() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h2>Reviews ({reviews.length})</h2>
               {isClient && !hasReviewed && (
-                <button onClick={() => setShowReviewForm(!showReviewForm)} style={{ padding: "10px 20px", backgroundColor: "#28a745", color: "white", border: "none", borderRadius: "4px", cursor: "pointer"}}>{showReviewForm ? "Cancel" : "Write a Review"}</button>
+                <button onClick={() => setShowReviewForm(!showReviewForm)} style={{ padding: "10px 20px", backgroundColor: "#28a745", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}>{showReviewForm ? "Cancel" : "Write a Review"}</button>
               )}
             </div>
 
             {showReviewForm && isClient && (
-              <form onSubmit={handleSubmitReview} style={{ backgroundColor: "#f8f9fa", padding: "20px", borderRadius: "8px", marginTop: "20px"}}>
+              <form onSubmit={handleSubmitReview} style={{ backgroundColor: "#f8f9fa", padding: "20px", borderRadius: "8px", marginTop: "20px" }}>
                 <h3>Submit Your Review</h3>
                 <div style={{ marginTop: "15px" }}>
                   <label htmlFor="rating" style={{ display: "block", marginBottom: "5px" }}> Rating</label>
-                  <select name="rating" value={reviewForm.rating} onChange={handleReviewChange} style={{ width: "100%", padding: "10px", borderRadius: "4px", border: "1px solid #ccc"}}>
+                  <select name="rating" value={reviewForm.rating} onChange={handleReviewChange} style={{ width: "100%", padding: "10px", borderRadius: "4px", border: "1px solid #ccc" }}>
                     <option value="5">⭐⭐⭐⭐⭐ (5 stars)</option>
                     <option value="4">⭐⭐⭐⭐ (4 stars)</option>
                     <option value="3">⭐⭐⭐ (3 stars)</option>
@@ -369,14 +431,14 @@ function Publicprofile() {
                 </div>
                 <div style={{ marginTop: "15px" }}>
                   <label htmlFor="comment" style={{ display: "block", marginBottom: "5px" }}>Your Review</label>
-                  <textarea name="comment" placeholder="Describe your experience with this artisan..." value={reviewForm.comment} onChange={handleReviewChange} required rows="4" style={{ width: "100%", padding: "10px", borderRadius: "4px", border: "1px solid #ccc"}}/>
+                  <textarea name="comment" placeholder="Describe your experience with this artisan..." value={reviewForm.comment} onChange={handleReviewChange} required rows="4" style={{ width: "100%", padding: "10px", borderRadius: "4px", border: "1px solid #ccc" }} />
                 </div>
-                <button type="submit" disabled={submittingReview} style={{ marginTop: "15px", padding: "10px 30px", backgroundColor: "#007bff", color: "white", border: "none", borderRadius: "4px", cursor: submittingReview ? "not-allowed" : "pointer"}}>{submittingReview ? "Submitting..." : "Submit Review"}</button>
+                <button type="submit" disabled={submittingReview} style={{ marginTop: "15px", padding: "10px 30px", backgroundColor: "#007bff", color: "white", border: "none", borderRadius: "4px", cursor: submittingReview ? "not-allowed" : "pointer" }}>{submittingReview ? "Submitting..." : "Submit Review"}</button>
               </form>
             )}
 
             {hasReviewed && isClient && (
-              <p style={{ color: "#28a745", marginTop: "10px" }}>You have already reviewed this artisan</p>
+              <p style={{ color: "#28a745", marginTop: "10px" }}>✓ You have already reviewed this artisan</p>
             )}
 
             {reviews.length === 0 ? (
@@ -384,9 +446,9 @@ function Publicprofile() {
             ) : (
               <div style={{ marginTop: "20px" }}>
                 {reviews.map((review) => (
-                  <section key={review._id} style={{ backgroundColor: "#f8f9fa", padding: "20px", borderRadius: "8px", marginBottom: "15px"}}>
+                  <section key={review._id} style={{ backgroundColor: "#f8f9fa", padding: "20px", borderRadius: "8px", marginBottom: "15px" }}>
                     <nav style={{ display: "flex", alignItems: "center", marginBottom: "10px" }}>
-                      <img src={getProfilePictureUrl(review.clientId?.profilePicture, profilepic)}  alt="profilepicimg" style={{ width: "50px", height: "50px", borderRadius: "50%", objectFit: "cover" }}/>
+                      <img src={getProfilePictureUrl(review.clientId?.profilePicture, profilepic)} alt="profilepicimg" style={{ width: "50px", height: "50px", borderRadius: "50%", objectFit: "cover" }} />
                       <nav style={{ marginLeft: "10px" }}>
                         <h5 style={{ margin: 0 }}>{review.clientId?.name || "Anonymous"}</h5>
                         <p style={{ margin: 0, fontSize: "12px", color: "#999" }}>{new Date(review.createdAt).toLocaleDateString()}</p>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { subscribe, getSubscriptionStatus } from "../services/api";
+import Swal from 'sweetalert2';
 import "../styles/subscription.css";
 import close from "../images/icon-close.svg";
 import profilepic from "../images/profilepics.png";
@@ -34,8 +35,14 @@ function Subcription() {
     }
 
     if (user?.role !== "client") {
-      alert("Only clients can subscribe");
-      navigate("/Userdashboard");
+      Swal.fire({
+        icon: 'info',
+        title: 'Clients Only',
+        text: 'Only clients can subscribe to unlock contacts',
+        confirmButtonColor: '#3b82f6'
+      }).then(() => {
+        navigate("/Userdashboard");
+      });
       return;
     }
 
@@ -111,12 +118,22 @@ function Subcription() {
     e.preventDefault();
 
     if (!paymentDetails.cardNumber || !paymentDetails.expiryDate || !paymentDetails.cvc) {
-      alert("Please fill in all payment details");
+      Swal.fire({
+        icon: 'warning',
+        title: 'Incomplete Details',
+        text: 'Please fill in all payment details',
+        confirmButtonColor: '#3b82f6'
+      });
       return;
     }
 
     if (!selectedPlan) {
-      alert("Please select a plan first");
+      Swal.fire({
+        icon: 'warning',
+        title: 'No Plan Selected',
+        text: 'Please select a plan first',
+        confirmButtonColor: '#3b82f6'
+      });
       return;
     }
 
@@ -135,7 +152,12 @@ function Subcription() {
       setPaymentDetails({ cardNumber: "", expiryDate: "", cvc: "" });
       setSelectedPlan("");
     } catch (error) {
-      alert("Subscription failed: " + (error.response?.data?.message || error.message));
+      Swal.fire({
+        icon: 'error',
+        title: 'Subscription Failed',
+        text: error.response?.data?.message || error.message,
+        confirmButtonColor: '#3b82f6'
+      });
     } finally {
       setProcessing(false);
     }
@@ -198,7 +220,7 @@ function Subcription() {
               <section>
                 <span>{user?.name}</span>
                 <button onClick={handleLogout}>Logout</button>
-                <Link to="/Userdashboard"><img src={getProfilePictureUrl(user?.profilePicture, profilepic)}  alt="profilepicimg" style={{ width: "50px", height: "50px", borderRadius: "50%", objectFit: "cover" }}/></Link>
+                <Link to="/Userdashboard"><img src={getProfilePictureUrl(user?.profilePicture, profilepic)} alt="profilepicimg" style={{ width: "50px", height: "50px", borderRadius: "50%", objectFit: "cover" }} /></Link>
               </section>
               <summary id="summar">
                 <img src={close} alt="closeimg" id="close" />
@@ -255,26 +277,26 @@ function Subcription() {
                   <label htmlFor="cardNumber">Card number</label>
                   <nav>
                     <i className="fa-solid fa-credit-card"></i>
-                    <input type="text" name="cardNumber" placeholder="4242 4242 4242 4242" value={paymentDetails.cardNumber} onChange={handlePaymentChange} required/>
+                    <input type="text" name="cardNumber" placeholder="4242 4242 4242 4242" value={paymentDetails.cardNumber} onChange={handlePaymentChange} required />
                   </nav>
                 </nav>
                 <nav>
                   <label htmlFor="expiryDate">Expiry date</label>
                   <nav>
                     <i className="fa-regular fa-calendar"></i>
-                    <input type="text" name="expiryDate" placeholder="MM/YY" value={paymentDetails.expiryDate} onChange={handlePaymentChange} required/>
+                    <input type="text" name="expiryDate" placeholder="MM/YY" value={paymentDetails.expiryDate} onChange={handlePaymentChange} required />
                   </nav>
                 </nav>
                 <nav>
                   <label htmlFor="cvc">CVC</label>
                   <nav>
                     <i className="fa-solid fa-lock"></i>
-                    <input type="text" name="cvc" placeholder="123" value={paymentDetails.cvc} onChange={handlePaymentChange} maxLength="3" required/>
+                    <input type="text" name="cvc" placeholder="123" value={paymentDetails.cvc} onChange={handlePaymentChange} maxLength="3" required />
                   </nav>
                 </nav>
                 <div style={{ display: "flex", gap: "10px" }}>
-                  <button type="button" onClick={() => {setShowPaymentForm(false); setSelectedPlan(""); setPaymentDetails({ cardNumber: "", expiryDate: "", cvc: "" });}}>Cancel</button>
-                  <input type="submit" value={processing ? "Processing..." : "Confirm Payment"} disabled={processing} style={{cursor: processing ? "not-allowed" : "pointer",}}/>
+                  <button type="button" onClick={() => { setShowPaymentForm(false); setSelectedPlan(""); setPaymentDetails({ cardNumber: "", expiryDate: "", cvc: "" }); }}>Cancel</button>
+                  <input type="submit" value={processing ? "Processing..." : "Confirm Payment"} disabled={processing} style={{ cursor: processing ? "not-allowed" : "pointer" }} />
                 </div>
               </form>
             </div>
