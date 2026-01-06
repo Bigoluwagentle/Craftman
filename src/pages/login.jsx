@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "../services/api";
+import Swal from 'sweetalert2';
 import "../styles/registernow.css";
 
 function Login() {
@@ -25,7 +26,12 @@ function Login() {
     setError("");
 
     if (!formData.email || !formData.password) {
-      setError("Please fill in all fields");
+      Swal.fire({
+        icon: 'warning',
+        title: 'Missing Information',
+        text: 'Please fill in all fields',
+        confirmButtonColor: '#3b82f6'
+      });
       return;
     }
 
@@ -35,7 +41,12 @@ function Login() {
 
       // Check if email is verified
       if (!response.isVerified) {
-        alert("Please verify your email first. Check your inbox for the verification code.");
+        await Swal.fire({
+          icon: 'warning',
+          title: 'Email Not Verified',
+          text: 'Please verify your email first. Check your inbox for the verification code.',
+          confirmButtonColor: '#3b82f6'
+        });
         navigate("/EmailVerification", { state: { email: formData.email } });
         return;
       }
@@ -43,6 +54,16 @@ function Login() {
       // Save token and user data to localStorage
       localStorage.setItem("token", response.token);
       localStorage.setItem("user", JSON.stringify(response));
+
+      // Show success message
+      await Swal.fire({
+        icon: 'success',
+        title: 'Login Successful!',
+        text: 'Welcome back!',
+        confirmButtonColor: '#3b82f6',
+        timer: 1500,
+        showConfirmButton: false
+      });
 
       // Redirect based on role
       if (response.role === "client") {
@@ -53,7 +74,12 @@ function Login() {
         navigate("/Admindashboard");
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed. Please check your credentials.");
+      Swal.fire({
+        icon: 'error',
+        title: 'Login Failed',
+        text: err.response?.data?.message || "Login failed. Please check your credentials.",
+        confirmButtonColor: '#3b82f6'
+      });
     } finally {
       setLoading(false);
     }

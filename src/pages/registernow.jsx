@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../services/api";
+import Swal from 'sweetalert2';
 import "../styles/registernow.css";
 
 function Registernow() {
@@ -34,12 +35,22 @@ function Registernow() {
     setError("");
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+      Swal.fire({
+        icon: 'error',
+        title: 'Password Mismatch',
+        text: 'Passwords do not match',
+        confirmButtonColor: '#3b82f6'
+      });
       return;
     }
 
     if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters");
+      Swal.fire({
+        icon: 'error',
+        title: 'Weak Password',
+        text: 'Password must be at least 6 characters',
+        confirmButtonColor: '#3b82f6'
+      });
       return;
     }
 
@@ -53,7 +64,12 @@ function Registernow() {
 
     if (formData.role === "artisan") {
       if (!formData.craftType || !formData.experience || !formData.location) {
-        setError("Please fill all craftsman fields");
+        Swal.fire({
+          icon: 'warning',
+          title: 'Incomplete Information',
+          text: 'Please fill all craftsman fields',
+          confirmButtonColor: '#3b82f6'
+        });
         return;
       }
 
@@ -71,11 +87,22 @@ function Registernow() {
       setLoading(true);
       const response = await registerUser(userData);
 
+      await Swal.fire({
+        icon: 'success',
+        title: 'Registration Successful!',
+        text: response.message,
+        confirmButtonColor: '#3b82f6',
+        timer: 3000
+      });
+
       navigate("/EmailVerification", { state: { email: userData.email } });
-      
-      alert(response.message);
     } catch (err) {
-      setError(err.response?.data?.message || "Registration failed. Please try again.");
+      Swal.fire({
+        icon: 'error',
+        title: 'Registration Failed',
+        text: err.response?.data?.message || "Registration failed. Please try again.",
+        confirmButtonColor: '#3b82f6'
+      });
     } finally {
       setLoading(false);
     }

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { forgotPassword } from "../services/api";
-import "../styles/registernow.css"; // Reuse register styles
+import "../styles/registernow.css"; 
 
 function ForgotPassword() {
   const [email, setEmail] = useState("");

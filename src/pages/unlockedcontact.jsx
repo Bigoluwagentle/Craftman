@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getMyUnlockedContacts } from "../services/api";
+import Swal from 'sweetalert2';
 import "../styles/unlockedcontact.css";
 import close from "../images/icon-close.svg";
 import logo from "../images/logo.png";
@@ -25,8 +26,14 @@ function Unlockedcontact() {
     }
 
     if (user?.role !== "client") {
-      alert("Only clients can view unlocked contacts");
-      navigate("/Userdashboard");
+      Swal.fire({
+        icon: 'warning',
+        title: 'Access Denied',
+        text: 'Only clients can view unlocked contacts',
+        confirmButtonColor: '#3b82f6'
+      }).then(() => {
+        navigate("/Userdashboard");
+      });
       return;
     }
 

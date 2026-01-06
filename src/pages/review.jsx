@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getMyReviews, deleteReview } from "../services/api";
+import Swal from 'sweetalert2';
 import "../styles/review.css";
 import close from "../images/icon-close.svg";
 import hamburger from "../images/icon-hamburger.svg";
@@ -26,8 +27,14 @@ function Review() {
     }
 
     if (user?.role !== "client") {
-      alert("Only clients can view reviews");
-      navigate("/Userdashboard");
+      Swal.fire({
+        icon: 'warning',
+        title: 'Access Denied',
+        text: 'Only clients can view reviews',
+        confirmButtonColor: '#3b82f6'
+      }).then(() => {
+        navigate("/Userdashboard");
+      });
       return;
     }
 
@@ -49,17 +56,39 @@ function Review() {
   };
 
   const handleDeleteReview = async (reviewId) => {
-    if (!window.confirm("Are you sure you want to delete this review?")) {
-      return;
-    }
+    const result = await Swal.fire({
+      title: 'Delete Review?',
+      text: "Are you sure you want to delete this review? This action cannot be undone.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3b82f6',
+      cancelButtonColor: '#ef4444',
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       setDeletingId(reviewId);
       await deleteReview(reviewId);
-      alert("Review deleted successfully");
+      
+      await Swal.fire({
+        icon: 'success',
+        title: 'Deleted!',
+        text: 'Review deleted successfully',
+        confirmButtonColor: '#3b82f6',
+        timer: 2000
+      });
+      
       fetchMyReviews();
     } catch (err) {
-      alert("Failed to delete review: " + (err.response?.data?.message || err.message));
+      Swal.fire({
+        icon: 'error',
+        title: 'Delete Failed',
+        text: err.response?.data?.message || err.message,
+        confirmButtonColor: '#3b82f6'
+      });
     } finally {
       setDeletingId(null);
     }
@@ -119,7 +148,7 @@ function Review() {
               <section>
                 <span style={{ marginRight: "10px", fontWeight: "bold" }}>{user?.name}</span>
                 <button onClick={handleLogout}>Logout</button>
-                <Link to="/Userdashboard"><img src={getProfilePictureUrl(user?.profilePicture, profilepic)}  alt="profilepicimg"/></Link>
+                <Link to="/Userdashboard"><img src={getProfilePictureUrl(user?.profilePicture, profilepic)}  alt="profilepicimg" style={{ width: "50px", height: "50px", borderRadius: "50%", objectFit: "cover" }}/></Link>
               </section>
               <summary id="summar">
                 <img src={close} alt="closeimg" id="close" />
