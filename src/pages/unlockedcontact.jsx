@@ -16,6 +16,25 @@ function Unlockedcontact() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // ✅ FIX: Use state for user instead of const
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
+
+  // ✅ FIX: Add storage event listener to update when localStorage changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const updatedUser = JSON.parse(localStorage.getItem("user"));
+      setUser(updatedUser);
+    };
+
+    window.addEventListener('profilePictureUpdated', handleStorageChange);
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('profilePictureUpdated', handleStorageChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
     const isLoggedIn = !!localStorage.getItem("token");
@@ -77,8 +96,6 @@ function Unlockedcontact() {
       </div>
     );
   }
-
-  const user = JSON.parse(localStorage.getItem("user"));
 
   return (
     <div className="unlockedcontact">

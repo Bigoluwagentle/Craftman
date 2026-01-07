@@ -20,7 +20,8 @@ function Admindashboard() {
   const [activeTab, setActiveTab] = useState("unverified");
   const [processingId, setProcessingId] = useState(null);
 
-  const user = JSON.parse(localStorage.getItem("user"));
+  // ✅ FIX: Use state for user instead of const
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
   const isLoggedIn = !!localStorage.getItem("token");
 
   useEffect(() => {
@@ -43,6 +44,25 @@ function Admindashboard() {
 
     fetchData();
   }, [isLoggedIn, navigate]);
+
+  // ✅ FIX: Add storage event listener to update when localStorage changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const updatedUser = JSON.parse(localStorage.getItem("user"));
+      setUser(updatedUser);
+    };
+
+    // Listen for custom event when profile picture is updated
+    window.addEventListener('profilePictureUpdated', handleStorageChange);
+    
+    // Also listen for storage changes (works across tabs)
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('profilePictureUpdated', handleStorageChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   const fetchData = async () => {
     try {

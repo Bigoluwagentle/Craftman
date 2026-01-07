@@ -24,17 +24,19 @@ function Subcription() {
     cvc: "",
   });
 
+  // ✅ FIX: Use state for user instead of const
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
   const isLoggedIn = !!localStorage.getItem("token");
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
+    const currentUser = JSON.parse(localStorage.getItem("user"));
 
     if (!isLoggedIn) {
       navigate("/Login");
       return;
     }
 
-    if (user?.role !== "client") {
+    if (currentUser?.role !== "client") {
       Swal.fire({
         icon: 'info',
         title: 'Clients Only',
@@ -48,6 +50,22 @@ function Subcription() {
 
     fetchSubscriptionData();
   }, [isLoggedIn, navigate]);
+
+  // ✅ FIX: Add storage event listener to update when localStorage changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const updatedUser = JSON.parse(localStorage.getItem("user"));
+      setUser(updatedUser);
+    };
+
+    window.addEventListener('profilePictureUpdated', handleStorageChange);
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('profilePictureUpdated', handleStorageChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   const fetchSubscriptionData = async () => {
     try {
@@ -189,7 +207,6 @@ function Subcription() {
 
   const currentPlan = subscription?.plan || "free";
   const isActive = subscription?.status === "active";
-  const user = JSON.parse(localStorage.getItem("user"));
 
   return (
     <div className="subscription">

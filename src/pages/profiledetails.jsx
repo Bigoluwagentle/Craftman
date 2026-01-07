@@ -7,6 +7,7 @@ import close from "../images/icon-close.svg";
 import hamburger from "../images/icon-hamburger.svg";
 import logo from "../images/logo.png";
 import profilepic from "../images/profilepics.png";
+import { getProfilePictureUrl } from "../utils/imageHelper";
 
 function Profiledetails() {
   const navigate = useNavigate();
@@ -18,7 +19,10 @@ function Profiledetails() {
 
   const [userProfile, setUserProfile] = useState(null);
   // eslint-disable-next-line no-unused-vars
-  const [artisanProfile, setArtisanProfile] = useState(null); 
+  const [artisanProfile, setArtisanProfile] = useState(null);
+  
+  // ✅ FIX: Use state for user to allow updates
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
 
   const [userFormData, setUserFormData] = useState({
     name: "",
@@ -50,6 +54,9 @@ function Profiledetails() {
       setLoading(true);
       const userData = await getUserProfile();
       setUserProfile(userData);
+      
+      // ✅ FIX: Update user state
+      setUser(userData);
 
       setUserFormData({
         name: userData.name,
@@ -127,6 +134,9 @@ function Profiledetails() {
       const response = await uploadProfilePicture(formData);
 
       localStorage.setItem("user", JSON.stringify(response.user));
+      
+      // ✅ FIX: Dispatch event to notify other components
+      window.dispatchEvent(new Event('profilePictureUpdated'));
 
       await fetchProfileData();
 
@@ -170,6 +180,9 @@ function Profiledetails() {
       const updatedUser = JSON.parse(localStorage.getItem("user"));
       updatedUser.profilePicture = "";
       localStorage.setItem("user", JSON.stringify(updatedUser));
+      
+      // ✅ FIX: Dispatch event to notify other components
+      window.dispatchEvent(new Event('profilePictureUpdated'));
 
       await fetchProfileData();
 
@@ -276,11 +289,8 @@ function Profiledetails() {
   }
 
   const isArtisan = userProfile?.role === "artisan";
-  const API_BASE_URL = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:5000';
 
-  const profilePictureUrl = userProfile?.profilePicture
-    ? `${API_BASE_URL}${userProfile.profilePicture}`
-    : profilepic;
+  const profilePictureUrl = getProfilePictureUrl(user?.profilePicture, profilepic);
 
   return (
     <div className="profiledetails">
@@ -297,7 +307,7 @@ function Profiledetails() {
               </div>
               <section>
                 <button onClick={handleLogout} style={{ marginRight: "10px" }}>Logout</button>
-                <Link to="/Userdashboard"><img src={profilePictureUrl} alt="profilepicimg" /></Link>
+                <Link to="/Userdashboard"><img src={profilePictureUrl} alt="profilepicimg" style={{ width: "50px", height: "50px", borderRadius: "50%", objectFit: "cover" }} /></Link>
               </section>
               <summary id="summar">
                 <img src={close} alt="closeimg" id="close" />
@@ -311,11 +321,11 @@ function Profiledetails() {
           <main>
             <h1>My Profile</h1>
             <div>
-              <img src={profilePictureUrl} alt="Profile" />
+              <img src={profilePictureUrl} alt="Profile" style={{ width: "150px", height: "150px", borderRadius: "50%", objectFit: "cover" }} />
               <div>
                 <input type="file" id="profilePictureInput" accept="image/*" onChange={handleImageUpload} style={{ display: "none" }} />
                 <button onClick={() => document.getElementById("profilePictureInput").click()} disabled={uploadingImage} style={{ cursor: uploadingImage ? "not-allowed" : "pointer" }}>{uploadingImage ? "Uploading..." : "Change Picture"}</button>
-                {userProfile?.profilePicture && (
+                {user?.profilePicture && (
                   <button onClick={handleDeleteImage} disabled={uploadingImage} style={{ backgroundColor: "#dc3545", cursor: uploadingImage ? "not-allowed" : "pointer" }}> Delete Picture</button>
                 )}
               </div>

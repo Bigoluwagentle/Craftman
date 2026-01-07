@@ -29,11 +29,28 @@ function Publicprofile() {
     comment: "",
   });
 
-  const user = JSON.parse(localStorage.getItem("user"));
+  // ✅ FIX: Use state for user instead of const
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
   const isLoggedIn = !!localStorage.getItem("token");
   const isClient = user?.role === "client";
 
   const hasSubscription = user?.subscription?.status === "active" || false;
+
+  // ✅ FIX: Add storage event listener BEFORE other useEffects
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const updatedUser = JSON.parse(localStorage.getItem("user"));
+      setUser(updatedUser);
+    };
+
+    window.addEventListener('profilePictureUpdated', handleStorageChange);
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('profilePictureUpdated', handleStorageChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -143,6 +160,9 @@ function Publicprofile() {
       const updatedUser = JSON.parse(localStorage.getItem("user"));
       updatedUser.subscription.unlockedContacts = response.remainingContacts;
       localStorage.setItem("user", JSON.stringify(updatedUser));
+      
+      // ✅ Update local user state as well
+      setUser(updatedUser);
     } catch (err) {
       Swal.fire({
         icon: 'error',
@@ -337,7 +357,7 @@ function Publicprofile() {
       <main>
         <div>
           <div>
-            <img src={getProfilePictureUrl(artisan.userId?.profilePicture, profilepic)} alt="profilepicimg" />
+            <img src={getProfilePictureUrl(artisan.userId?.profilePicture, profilepic)} alt="profilepicimg" style={{ width: "150px", height: "150px", borderRadius: "50%", objectFit: "cover" }} />
             <nav>
               <h3>{artisan.userId?.name}</h3>
               <p>Expert {artisan.craftType}</p>

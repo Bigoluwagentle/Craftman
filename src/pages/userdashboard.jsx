@@ -15,8 +15,9 @@ function Userdashboard() {
   const [artisanProfile, setArtisanProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  const user = JSON.parse(localStorage.getItem("user"));
+  
+  // ✅ FIX: Use state for user instead of const
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
   const isLoggedIn = !!localStorage.getItem("token");
 
   useEffect(() => {
@@ -27,12 +28,34 @@ function Userdashboard() {
     fetchUserData();
   }, [isLoggedIn, navigate]);
 
+  // ✅ FIX: Add storage event listener to update when localStorage changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const updatedUser = JSON.parse(localStorage.getItem("user"));
+      setUser(updatedUser);
+    };
+
+    // Listen for custom event when profile picture is updated
+    window.addEventListener('profilePictureUpdated', handleStorageChange);
+    
+    // Also listen for storage changes (works across tabs)
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('profilePictureUpdated', handleStorageChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   const fetchUserData = async () => {
     try {
       setLoading(true);
   
       const userData = await getUserProfile();
       setUserProfile(userData);
+      
+      // ✅ FIX: Update user state with fresh data
+      setUser(userData);
 
       if (userData.role === "artisan") {
         const artisanData = await getArtisanProfile();

@@ -15,7 +15,8 @@ function Browsecraft() {
   const [searchTerm, setSearchTerm] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
 
-  const user = JSON.parse(localStorage.getItem("user"));
+  // ✅ FIX: Use state for user instead of const
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
   const isLoggedIn = !!localStorage.getItem("token");
 
   useEffect(() => {
@@ -29,6 +30,25 @@ function Browsecraft() {
       fetchArtisans();
     }
   }, [isLoggedIn]);
+
+  // ✅ FIX: Add storage event listener to update when localStorage changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const updatedUser = JSON.parse(localStorage.getItem("user"));
+      setUser(updatedUser);
+    };
+
+    // Listen for custom event when profile picture is updated
+    window.addEventListener('profilePictureUpdated', handleStorageChange);
+    
+    // Also listen for storage changes (works across tabs)
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('profilePictureUpdated', handleStorageChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   const fetchArtisans = async () => {
     try {
@@ -101,7 +121,7 @@ function Browsecraft() {
           <section>
             <span>Welcome, {user?.name}</span>
             <button onClick={handleLogout} style={{ marginRight: "10px" }}>Logout</button>
-            <Link to="/Userdashboard"><img src={getProfilePictureUrl(user?.profilePicture, profilepic)}  alt="profilepicimg"/></Link>
+            <Link to="/Userdashboard"><img src={getProfilePictureUrl(user?.profilePicture, profilepic)}  alt="profilepicimg" style={{ width: "50px", height: "50px", borderRadius: "50%", objectFit: "cover" }}/></Link>
           </section>
         </section>
       </header>
