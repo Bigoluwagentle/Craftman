@@ -133,7 +133,19 @@ function Profiledetails() {
 
       const response = await uploadProfilePicture(formData);
 
+      // 🔍 DEBUG: Check what backend returned
+      console.log('✅ Backend response:', response);
+      console.log('👤 User from response:', response.user);
+      console.log('🖼️ ProfilePicture from response:', response.user?.profilePicture);
+
       localStorage.setItem("user", JSON.stringify(response.user));
+      
+      // 🔍 DEBUG: Check what was saved to localStorage
+      const savedUser = JSON.parse(localStorage.getItem("user"));
+      console.log('💾 Saved to localStorage:', savedUser.profilePicture);
+      
+      // ✅ FIX: Update local state immediately
+      setUser(response.user);
       
       // ✅ FIX: Dispatch event to notify other components
       window.dispatchEvent(new Event('profilePictureUpdated'));
@@ -148,6 +160,9 @@ function Profiledetails() {
         timer: 2000
       });
     } catch (err) {
+      console.error('❌ Upload error:', err);
+      console.error('❌ Error response:', err.response?.data);
+      
       Swal.fire({
         icon: 'error',
         title: 'Upload Failed',
