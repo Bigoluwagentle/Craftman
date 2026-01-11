@@ -220,13 +220,14 @@ function Userdashboard() {
               <aside>
                 <nav>
                   <h5>Verification Status</h5>
+                  {/* ✅ FIX: Check artisanProfile.isVerified (admin verification) instead of userProfile.isVerified (email verification) */}
                   <p
                     style={{
-                      color: userProfile.isVerified ? "#28a745" : "#ffc107",
+                      color: artisanProfile.isVerified ? "#28a745" : "#ffc107",
                       fontWeight: "bold",
                     }}
                   >
-                    {userProfile.isVerified ? "Verified" : "Pending Verification"}
+                    {artisanProfile.isVerified ? "Verified ✓" : "Pending Admin Verification ⏳"}
                   </p>
                 </nav>
                 <aside>
@@ -244,7 +245,8 @@ function Userdashboard() {
                 </Link>
               </aside>
 
-              {!userProfile.isVerified && (
+              {/* ✅ FIX: Check artisanProfile.isVerified instead of userProfile.isVerified */}
+              {!artisanProfile.isVerified && (
                 <div
                   style={{
                     backgroundColor: "#fff3cd",
@@ -255,10 +257,10 @@ function Userdashboard() {
                   }}
                 >
                   <p style={{ fontWeight: "bold", marginBottom: "10px" }}>
-                     Your profile is pending admin verification
+                    ⏳ Your profile is pending admin verification
                   </p>
                   <p>
-                    Once verified, your profile will be visible to clients searching for craftsmen.
+                    You have verified your email ✓ Now waiting for admin approval to appear in craftsmen listings.
                   </p>
                 </div>
               )}
