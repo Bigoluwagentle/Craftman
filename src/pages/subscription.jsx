@@ -161,6 +161,9 @@ function Subcription() {
       const response = await subscribe(selectedPlan);
 
       localStorage.setItem("user", JSON.stringify(response.user));
+      
+      // ✅ Update local state
+      setUser(response.user);
 
       setShowSuccessModal(true);
       setShowPaymentForm(false);
@@ -205,8 +208,10 @@ function Subcription() {
     );
   }
 
-  const currentPlan = subscription?.plan || "free";
-  const isActive = subscription?.status === "active";
+  // ✅ FIX: Get subscription details from user state
+  const currentPlan = user?.subscription?.plan || "free";
+  const isActive = user?.subscription?.status === "active";
+  const currentPlanName = plans.find(p => p.id === currentPlan)?.name || "Free Plan";
 
   return (
     <div className="subscription">
@@ -251,14 +256,42 @@ function Subcription() {
             </section>
           </header>
 
-          {isActive && (
-            <div>
-              <h3>Current Subscription:{" "}{plans.find((p) => p.id === currentPlan)?.name || currentPlan}</h3>
-              <p>Status: Active</p>
-              <p>Unlocked Contacts Available: {subscription.unlockedContacts}</p>
-              {subscription.endDate && (
-                <p>Renews on: {new Date(subscription.endDate).toLocaleDateString()}</p>
+          {/* ✅ FIX: Show current subscription details */}
+          {isActive ? (
+            <div style={{ 
+              backgroundColor: "#d4edda", 
+              padding: "20px", 
+              borderRadius: "8px", 
+              marginBottom: "20px",
+              border: "1px solid #c3e6cb" 
+            }}>
+              <h3 style={{ margin: "0 0 10px 0", color: "#155724" }}>
+                ✓ Current Subscription: {currentPlanName}
+              </h3>
+              <p style={{ margin: "5px 0", color: "#155724" }}>
+                <strong>Status:</strong> Active
+              </p>
+              <p style={{ margin: "5px 0", color: "#155724" }}>
+                <strong>Unlocked Contacts Available:</strong> {user?.subscription?.unlockedContacts || 0}
+              </p>
+              {user?.subscription?.endDate && (
+                <p style={{ margin: "5px 0", color: "#155724" }}>
+                  <strong>Renews on:</strong> {new Date(user.subscription.endDate).toLocaleDateString()}
+                </p>
               )}
+            </div>
+          ) : (
+            <div style={{ 
+              backgroundColor: "#f8f9fa", 
+              padding: "20px", 
+              borderRadius: "8px", 
+              marginBottom: "20px",
+              border: "1px solid #dee2e6" 
+            }}>
+              <h3 style={{ margin: "0 0 10px 0" }}>Current Plan: Free</h3>
+              <p style={{ margin: "5px 0", color: "#666" }}>
+                Subscribe to unlock contacts and access premium features!
+              </p>
             </div>
           )}
 
@@ -275,7 +308,7 @@ function Subcription() {
                     <h6 key={idx}><i className="fa-regular fa-square-check"></i>{feature}</h6>
                   ))}
                   {currentPlan === plan.id && isActive ? (
-                    <button disabled style={{ backgroundColor: "#6c757d", cursor: "not-allowed" }}>Current Plan</button>
+                    <button disabled style={{ backgroundColor: "#6c757d", cursor: "not-allowed" }}>Current Plan ✓</button>
                   ) : (
                     <button onClick={() => handleChoosePlan(plan.id)}>Choose Plan</button>
                   )}
