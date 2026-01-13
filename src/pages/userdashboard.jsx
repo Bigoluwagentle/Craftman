@@ -16,7 +16,6 @@ function Userdashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   
-  // ✅ FIX: Use state for user instead of const
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
   const isLoggedIn = !!localStorage.getItem("token");
 
@@ -28,17 +27,14 @@ function Userdashboard() {
     fetchUserData();
   }, [isLoggedIn, navigate]);
 
-  // ✅ FIX: Add storage event listener to update when localStorage changes
   useEffect(() => {
     const handleStorageChange = () => {
       const updatedUser = JSON.parse(localStorage.getItem("user"));
       setUser(updatedUser);
     };
 
-    // Listen for custom event when profile picture is updated
     window.addEventListener('profilePictureUpdated', handleStorageChange);
     
-    // Also listen for storage changes (works across tabs)
     window.addEventListener('storage', handleStorageChange);
 
     return () => {
@@ -54,7 +50,6 @@ function Userdashboard() {
       const userData = await getUserProfile();
       setUserProfile(userData);
       
-      // ✅ FIX: Update user state with fresh data
       setUser(userData);
 
       if (userData.role === "artisan") {
@@ -107,6 +102,20 @@ function Userdashboard() {
   const isArtisan = userProfile?.role === "artisan";
   const isClient = userProfile?.role === "client";
 
+  const subscription = user?.subscription || userProfile?.subscription;
+  const hasActiveSubscription = subscription?.status === "active";
+  const currentPlan = subscription?.plan || "free";
+  
+  const planNames = {
+    "basic-monthly": "Basic (Monthly)",
+    "basic-yearly": "Premium (Yearly)",
+    "pay-per-contact": "Pay-per-Contact",
+    "free": "Free Plan"
+  };
+  
+  const displayPlanName = planNames[currentPlan] || "Free Plan";
+  const unlockedContacts = subscription?.unlockedContacts || 0;
+
   return (
     <div>
       <div className="userdashboard">
@@ -152,27 +161,30 @@ function Userdashboard() {
             </p>
           </div>
 
-          {/* Client Dashboard */}
           {isClient && (
             <>
               <aside>
                 <nav>
                   <h5>Subscription Status</h5>
-                  <p style={{ color: "#28a745", fontWeight: "bold" }}>
-                    {/* TODO: Get actual subscription status from backend */}
-                    Free Plan
+                  <p style={{ 
+                    color: hasActiveSubscription ? "#28a745" : "#6c757d", 
+                    fontWeight: "bold" 
+                  }}>
+                    {hasActiveSubscription ? "Active ✓" : "Free"}
                   </p>
                 </nav>
                 <aside>
                   <p>Current Plan:</p>
-                  <h6>Basic</h6>
+                  <h6>{displayPlanName}</h6>
                 </aside>
                 <aside>
                   <p>Unlocked Contacts:</p>
-                  <h6>0</h6> {/* TODO: Get from backend */}
+                  <h6>{unlockedContacts}</h6>
                 </aside>
                 <Link to="/Subcription">
-                  <button>Upgrade Subscription</button>
+                  <button>
+                    {hasActiveSubscription ? "Manage Subscription" : "Upgrade Subscription"}
+                  </button>
                 </Link>
               </aside>
 
@@ -205,7 +217,7 @@ function Userdashboard() {
                   </nav>
                   <nav>
                     <Link to="/Profiledetails">
-                      <i className="fa-solid fa-search"></i>Edit details
+                      <i className="fa-solid fa-user"></i>Edit details
                     </Link>
                     <h6>You can edit your profile details here.</h6>
                   </nav>
@@ -220,7 +232,6 @@ function Userdashboard() {
               <aside>
                 <nav>
                   <h5>Verification Status</h5>
-                  {/* ✅ FIX: Check artisanProfile.isVerified (admin verification) instead of userProfile.isVerified (email verification) */}
                   <p
                     style={{
                       color: artisanProfile.isVerified ? "#28a745" : "#ffc107",
@@ -245,7 +256,6 @@ function Userdashboard() {
                 </Link>
               </aside>
 
-              {/* ✅ FIX: Check artisanProfile.isVerified instead of userProfile.isVerified */}
               {!artisanProfile.isVerified && (
                 <div
                   style={{
