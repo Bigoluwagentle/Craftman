@@ -87,7 +87,7 @@ function Homepage() {
               <i className="fa-solid fa-magnifying-glass"></i>
               <input 
                 type="search" 
-                placeholder='Search for artisans, craft or location'
+                placeholder='Search for artisans'
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
